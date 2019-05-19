@@ -7,12 +7,15 @@ const { validationResult } = require('express-validator/check');
 var User = require("../models/authModel");
 
 exports.login = (req,res,next) => {
+  console.log(req.body);
     User.login(req.body.email,function(error,user){
         if(error){
           next(new Error(error));
         } else {
+          console.log(user)
             if(!user.length){
-                res.status(401).json({
+                res.send({
+                  status:false,
                   message:"Authentication Failed"
                 });
             } else {
@@ -26,20 +29,23 @@ exports.login = (req,res,next) => {
                         name:user[0].str_name,
                         email:user[0].str_email
                       },
-                      "testing",
+                      process.env.JWT_PRIVATE_KEY,
                       {
-                        expiresIn: 120
+                        expiresIn: 3000
                       }
                     );
-                    res.cookie('token',token)
+                    //res.cookie('token',token)
                     res.status(202).json({
-                      message:"login successfull"
+                      status:true,
+                      message:"login successfull",
+                      token:token
                     });
                   } else {
-                    res.status(401).json({
+                    res.send({
+                      status:false,
                       message:"Authentication Failed"
                     });
-                  }	
+                  }
                 });
             }
         }
@@ -50,21 +56,21 @@ exports.signUp = (req,res,next)=>{
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         let errorResult={
-            name:'',
-            email:'',
-            password:''
+            nameError:'',
+            emailError:'',
+            passwordError:''
         }
         errors.array().forEach((value)=>{
             errorResult[value.param] = value.msg
-        }) 
-        return res.status(422).json(errorResult);
+        })
+        res.send({status:false,message:errorResult});
     }
     let user ={
         name:req.body.name,
         email:req.body.email,
         password:req.body.password
     };
-    
+
     bcrypt.hash(user.password, saltRounds, function(err, hash) {
         if(err){
           next(new Error(err));
@@ -75,7 +81,8 @@ exports.signUp = (req,res,next)=>{
             if(error) {
               next(new Error(error));
             } else {
-              res.status(201).json({
+              res.send({
+                status:true,
                 message:"registered sucessfully",
                 user:results
               });
@@ -86,16 +93,18 @@ exports.signUp = (req,res,next)=>{
 };
 
 exports.checkEmail = (req,res,next) => {
-  User.email(req.body.email,function(error,result){
+  User.email(req.params.email,function(error,result){
     if(error){
       next(new Error(error));
-    } 
+    }
     if(result.length){
-      res.status(402).json({
+      res.send({
+        status:false,
         message:"Email is already exists"
       })
     }else{
-      res.status(200).json({
+      res.send({
+        status:true,
         message:"Email is ok"
       })
     }

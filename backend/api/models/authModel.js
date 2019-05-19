@@ -25,7 +25,7 @@ User.login = function(email,result){
 
 User.signUp = function(newUser,result){
     con.query(`
-        INSERT INTO 
+        INSERT INTO
         tbl_user(str_name,str_email,str_password)
         VALUES(?,?,?)
         `,[newUser.name,newUser.email,newUser.password],

@@ -1,9 +1,9 @@
 <template>
-    <div id="register" class="tab-pane fade">
+    <div id="register">
         <h4 class="card-title mt-3 text-center">Create Account</h4>
         <p class="text-center">Get started with your free account</p>
-        <div class="text-center text-success" v-show="registrationSuccessMessage">{{registrationSuccessMessage}}</div>
-        <div class="text-center text-danger" v-show="registrationErrorMessage">{{registrationErrorMessage}}</div>
+
+        <div class="text-center text-danger" v-show="errorMessage">{{errorMessage}}</div>
         <!-- Registration Form -->
         <form>
             <div class="form-group">
@@ -24,14 +24,14 @@
             </div>
             <div class="form-group">
                 <button type="submit" class="btn btn-primary btn-block" id="signupBtn" @click.prevent="createAccount"> Create Account  </button>
-            </div> <!-- form-group// -->
-            <p class="text-center">Have an account? <a href="#login" data-toggle="tab">Log In</a> </p>
+            </div>
+            <p class="text-center">Have an account? <router-link to="/login">Log In</router-link> </p>
         </form>
     </div>
 </template>
 <script>
-import axios from 'axios'
-//import JQuery from 'jquery'
+import UserService from '@/settings/UserService.js';
+import router from "../router"
 export default {
     data() {
         return {
@@ -45,37 +45,36 @@ export default {
             emailError:'',
             passwordError:'',
             rePasswordError:'',
-            registrationSuccessMessage:'',
-            registrationErrorMessage:''
+            errorMessage:''
         }
+    },
+    beforeCreate(){
+      this.$store.commit('LoggedIn',false);
     },
     methods: {
         checkName(){
-            if(this.register.name.trim().length===0){
+          if(this.register.name.trim().length===0){
                 this.nameError = "Name field is required";
   		    }else if(!/^[A-Za-z]+[A-Za-z ]*$/.test(this.register.name.trim())){
                 this.nameError ="Name should contain only alphabets";
-  		    } 
+  		    }
         },
         clearNameError(){
             this.nameError = ""
         },
         checkEmail(){
-            if(this.register.email.trim().length===0){
+          if(this.register.email.trim().length===0){
   			    this.emailError = "Email field is required";
   		    }else if(!/^([a-zA-Z0-9_\-\.]+)@([a-zA-Z0-9_\-\.]+)\.([a-zA-Z]{2,5})$/.test(this.register.email.trim())){
   			    this.emailError ="Please enter a valid email address eg:- a@gmail.com";
   		    } else {
-                axios({
-                    method:'post',
-                    url:'http://localhost:3000/api/signup',
-                    data:{
-                        email:this.register.email
+                UserService.checkEmail({email:this.register.email})
+                .then((response)=>{
+                    if(!response.data.status){
+                      this.emailError = response.data.message;
                     }
-                }).then((response)=>{
-                    this.emailError = ""
                 }).catch((error)=>{
-                    this.emailError = "Email is already exists"
+                    this.errorMessage = "Some error occoured"
                 });
             }
         },
@@ -103,36 +102,36 @@ export default {
             this.rePasswordError = ""
         },
         createAccount(){
+            this.checkName();
+            this.checkEmail();
+            this.checkPassword();
+            this.checkRePassword();
             if(!this.nameError.length && !this.emailError.length && !this.passwordError.length && !this.rePasswordError.length){
-                axios({
-                    method: 'post',
-                    url: 'http://localhost:3000/api/signup',
-                    data:{
-                        name:this.register.name,
-                        email: this.register.email,
-                        password: this.register.password,
-                        rePassword : this.register.rePassword
-                    }
-                })
+                UserService.createAccount(this.register)
                 .then((response)=>{
-                    this.registrationErrorMessage = ''
-                    this.registrationSuccessMessage =  response.data.message;
+                  console.log(response);
+                  if(response.data.status){
+                    // jQuery.each(response.message,(key)=>{
+                    //     this.key = response.message[key]
+                    // })
+                    this.errorMessage =  "Registration Failed";
+                    router.push("/home")
+                  } else{
+                    console.log(response.data.message);
+                  }
                 })
                 .catch((error) => {
-                    this.registrationSuccessMessage = ''
-                    this.registrationErrorMessage =  "You entered some invalid input";
+//                    this.registrationSuccessMessage = ''
+                    this.errorMessage =  "Registration Failed";
                 });
-                jQuery.each(this.register,(key)=>{
-                    this.register[key] = ''
-                })    
             }
         }
     }
 }
 </script>
 <style scoped>
- img{
-   width: 100%;
-   height: 100%;
-} 
+#register{
+  width:400px;
+  margin:30px auto;
+}
 </style>

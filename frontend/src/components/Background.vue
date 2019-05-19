@@ -17,11 +17,9 @@
         <div class="item active">
           <img src="../../public/img/image1.jpg" alt="Los Angeles">
         </div>
-
         <div class="item">
           <img src="../../public/img/image2.jpg" alt="Chicago">
         </div>
-
         <div class="item">
           <img src="../../public/img/image3.jpg" alt="New York">
         </div>
